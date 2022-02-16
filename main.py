@@ -1,8 +1,5 @@
 import math
 import time
-
-from github import Github
-
 import bottle, os, psycopg2
 
 def listDIR(where, only=False):
@@ -18,12 +15,6 @@ def listDIR(where, only=False):
     return stuff
 
 from datetime import datetime
-try:
-    #DATABASE_URL = os.environ['DATABASE_URL']
-    GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
-except:
-    print('error')
-    exit()
 #conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 conn = None
 
