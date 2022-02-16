@@ -80,7 +80,7 @@ def redirect(place=''):
         <meta http-equiv="refresh" content="0; URL='"""+place+"""'" />
     </head>    
 </html>"""
-def head(tit="School Resources"):
+def head(tit="OIL~"):
     return f'''<head><meta content="width=device-width, initial-scale=1" name="viewport" /><title>{tit}</title>
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -309,6 +309,14 @@ def style():
         
     }
 </style>"""
+
+@APP.get("/<favicon>")
+def icon(favicon):
+    if os.path.exists(f'favicon/{favicon}'):
+        return bottle.static_file(root="favicon/", filename=favicon)
+    else:
+        response.status = 404
+        return '404 no such root file'
 
 @APP.get("/")
 def index():
