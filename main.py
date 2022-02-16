@@ -1,12 +1,10 @@
 import math
 import random
-import time
 import bottle, os, psycopg2
 import ftputil
 import cv2
-import numpy as np
 import imutils
-
+listOfScales = [0.01, 0.06210526315789474, 0.11421052631578947, 0.16631578947368422, 0.21842105263157896, 0.2705263157894737, 0.32263157894736844, 0.37473684210526315, 0.4268421052631579, 0.4789473684210527, 0.5310526315789474, 0.5831578947368421, 0.6352631578947369, 0.6873684210526316, 0.7394736842105263, 0.791578947368421, 0.8436842105263158, 0.8957894736842106, 0.9478947368421053, 1.0]
 def listDIR(where, only=False):
     stuff = os.listdir(where)
     if only:
@@ -325,7 +323,7 @@ where imageID = '{location}'""")
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         template = cv2.imread(f'temp/{location}.png', 0)
         best_match = None
-        for scale in np.linspace(0.01, 1, 20):
+        for scale in listOfScales:
             resized_template = imutils.resize(template, width=int(template.shape[1] * scale))
             res = cv2.matchTemplate(img, resized_template, cv2.TM_SQDIFF)
             min_val, _, min_loc, _ = cv2.minMaxLoc(res)
