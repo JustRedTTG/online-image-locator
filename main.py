@@ -308,7 +308,7 @@ def findIT(location):
         print(request.body.getvalue())
     except:
         for line in request.body:
-            print(line)
+            print(line.decode('utf-8'))
     return ''
 @APP.get("/locate/<location>")
 def locate(location):
