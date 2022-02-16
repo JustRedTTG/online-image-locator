@@ -3,6 +3,11 @@ import random
 import time
 import bottle, os, psycopg2
 import ftputil
+from pyautogui import *
+import cv2
+import numpy as np
+import imutils
+
 def listDIR(where, only=False):
     stuff = os.listdir(where)
     if only:
@@ -303,10 +308,41 @@ def icon(favicon):
 def findIT(location):
     image = request.files.get('image')
     if image:
-        print(image)
-    else:
-        print("NO IMAGE :(")
-    return ''
+        with conn.cursor() as cur:
+            cur.execute(f"""SELECT format from data
+where imageID = '{location}'""")
+            format = cur.fetchone()[0]
+        x = 0
+        y = 0
+        if os.path.exists(f'temp/{location}.png'):
+            os.remove(f'temp/{location}.png')
+        if os.path.exists(f'temp/{location}_locator.png'):
+            os.remove(f'temp/{location}_locator.png')
+        with connectFTP() as ftp:
+            ftp.download(f'{location}.png',f'temp/{location}.png')
+        image.save(f'temp/{location}_locator.png')
+
+        img = cv2.imread(f'temp/{location}_locator.png')
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        template = cv2.imread(f'temp/{location}.png', 0)
+        best_match = None
+        for scale in np.linspace(0.01, 1, 20):
+            resized_template = imutils.resize(template, width=int(template.shape[1] * scale))
+            res = cv2.matchTemplate(img, resized_template, cv2.TM_SQDIFF)
+            min_val, _, min_loc, _ = cv2.minMaxLoc(res)
+            if best_match is None or min_val <= best_match[0]:
+                ideal_scale = scale
+                h, w = resized_template.shape[::]
+                best_match = [min_val, min_loc, ideal_scale]
+        top_left = best_match[1]
+        x = top_left[0] + w/2
+        y = top_left[1] + h/2
+        if os.path.exists(f'temp/{location}.png'):
+            os.remove(f'temp/{location}.png')
+        if os.path.exists(f'temp/{location}_locator.png'):
+            os.remove(f'temp/{location}_locator.png')
+        return format.replace('%x',str(x)).replace('%y',str(y))
+    return 'please try again, image=@LOCATION'
 @APP.get("/locate/<location>")
 def locate(location):
     return f"""<h1>Sorry, please use post method.</h1>
