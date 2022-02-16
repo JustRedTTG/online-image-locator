@@ -1,7 +1,8 @@
 import math
+import random
 import time
 import bottle, os, psycopg2
-
+import ftputil
 def listDIR(where, only=False):
     stuff = os.listdir(where)
     if only:
@@ -13,10 +14,17 @@ def listDIR(where, only=False):
                 del stuff[i]
                 i = 0
     return stuff
-
+try:
+    DATABASE_URL = os.environ['DATABASE_URL']
+    password = os.environ['password']
+except:
+    print('error')
+    exit()
 from datetime import datetime
-#conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-conn = None
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+def connectFTP():
+    return ftputil.FTPHost("redlocate.free.bg","redlocate.free.bg",password)
+#conn = None
 
 APP = bottle.Bottle()
 request = bottle.request
@@ -26,11 +34,12 @@ debug = False
 try:
     with conn.cursor() as cur:
         cur.execute("""create table if not exists data (
-image BLOB,
+imageID TEXT ,
 format TEXT default '%x %y'
 )""")
-except:
-    pass
+    conn.commit()
+except Exception as e:
+    print("Couldn't make TABLE",e)
 
 try:
     if os.environ['debug'] == '1':
@@ -98,7 +107,7 @@ def style():
         height: auto;
         text-align: center;
         margin-right: 5px;
-        float: right;
+        float: center;
         clear: both;
     }
     .float p {
@@ -126,29 +135,6 @@ def style():
     }
     .infobuttons {
         display: flex;
-    }
-    .classdiv img
-    {
-        width: 80%;
-        margin: 0.2%;
-        margin-right: 0px;
-    }
-    .classdiv
-    {
-        background: #09FFC5;
-        display: flex;
-        justify-content: left;
-        align-items: center;
-        height: auto;
-        padding: 0px;
-    }
-    .classdiv .infodiv
-    {
-        background: #EEEEEE;
-        padding: 0px;
-        margin: 0px;
-        width: 19.8%;
-        word-wrap: break-word;
     }
     .headerdiv
     {
@@ -197,7 +183,7 @@ def style():
         border: none;
         text-decoration: none;
         /* CRISTMAS EGG */
-        /* background: url("/other/btn_c.png"), url("https://redicons.free.bg/school-resources/btn_c.png"); */
+        /* background: url("/other/btn_c.png"), url("https://redicons.free.bg/locateimg/btn_c.png"); */
         /* background-size: 64px 64px; */
         /* color: white; */
         /* text-shadow: -1px -1px 2px #FF0000, 1px -1px 2px #FF0000, -1px 1px 2px #FF0000, 1px 1px 2px #FF0000; */
@@ -209,7 +195,7 @@ def style():
     }
     button#waiting
     {
-        /* background: url("/other/btn_c.png"), url("https://redicons.free.bg/school-resources/btn_c.png"); */
+        /* background: url("/other/btn_c.png"), url("https://redicons.free.bg/locateimg/btn_c.png"); */
         background-size: 64px 64px;
     }
     .infobuttons
@@ -251,7 +237,7 @@ def style():
     }
     .shorty:after
     {
-        content: 'School Resources';
+        content: 'Online Image Locatior';
     }
     @media only screen and (max-width: 768px)
     {
@@ -261,7 +247,7 @@ def style():
         }
         .shorty:after
         {
-            content: 'SR';
+            content: 'OIL~';
         }
         #scale2, #new, #old, #waiting, #canceled, #gone
         {
@@ -300,21 +286,70 @@ def style():
         
     }
 </style>"""
-
+def id_db(id):
+    with conn.cursor() as cur:
+        cur.execute(f"""SELECT imageID from data
+where imageID = '{id}'""")
+        length = len(cur.fetchall())
+        return length == 0
 @APP.get("/<favicon>")
 def icon(favicon):
     if os.path.exists(f'favicon/{favicon}'):
         return bottle.static_file(root="favicon/", filename=favicon)
     else:
         response.status = 404
-        return '404 no such root file'
-
+        return '404 no such favicon file'
+@APP.post("/locate/<location>")
+def findIT(location):
+    headers_string = ['{}: {}'.format(h, request.headers.get(h)) for h in request.headers.keys()]
+    print('URL={}, method={}\nheaders:\n{}'.format(request.url, request.method, '\n'.join(headers_string)))
+    print(dir(request.files))
+    print('>',request.files.keys())
+    return ''
+@APP.get("/locate/<location>")
+def locate(location):
+    return f"""<h1>Sorry, please use post method.</h1>
+<h3>This is the image you tried to access BTW!</h3>
+<img src="https://redlocate.free.bg/{location}.png">
+<h4>HINT: If you see nothing, opps, you got the ID wrong!!!</h4>
+<form action="/locate/{location}" method="post">
+<input type="file" name="image">
+<input type="submit" value="Locate!">
+</form>"""
+@APP.post("/")
+def postIndex():
+    return redirect('/')
+@APP.post("/c/")
+def create():
+    identifier = request.forms.get("identifier")
+    image = request.files.get("image")
+    id = random.randint(0,1000000000000)
+    while not id_db(id):
+        id = random.randint(0, 1000000000000)
+    image.save(f"temp/{id}.png")
+    with conn.cursor() as cur:
+        cur.execute(f"""INSERT INTO data
+VALUES ('{id}', '{identifier}');""")
+        with connectFTP() as ftp:
+            ftp.upload(f"temp/{id}.png", f'{id}.png')
+        os.remove(f"temp/{id}.png")
+        conn.commit()
+    return f"""<h1>GREAT!</h1>
+<h3>Go brag to your friends. you have the id of {id}</h3><br>
+<ul>
+<h2>{identifier}</h2>
+<img src="">
+</ul>"""
 @APP.get("/")
 def index():
     html = "<!doctype html><html><body>" + top() + header() + style()
     html += head()
-    html += """<ul>"""
-    html += """</ul></body></html>"""
+    html += """<div style="margin-left:40%;"><form action="c/" method="post" enctype="multipart/form-data">
+    <input type="text" name="identifier" value="%x %y"><br>
+    <input type="file" name="image"><br>
+    <input type="submit" value="Create Locator" style="text-align:center;"><br>
+    </form></div>"""
+    html += """</body></html>"""
     return html
 def run():
     #print("RUNNING SERVER")
