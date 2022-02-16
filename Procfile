@@ -1,1 +1,1 @@
-web: gunicorn OIL/main:APP --log-file -
+web: gunicorn main:APP --log-file -

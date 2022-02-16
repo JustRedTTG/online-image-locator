@@ -49,7 +49,7 @@ except:
     debug = True
     pc_mode = True
 try:
-    os.chdir('/app/online image locator')
+    os.chdir('/app')
 except:
     pass
 def get_size(start_path = '.'):
