@@ -303,7 +303,12 @@ def icon(favicon):
 def findIT(location):
     headers_string = ['{}: {}'.format(h, request.headers.get(h)) for h in request.headers.keys()]
     print('URL={}, method={}\nheaders:\n{}'.format(request.url, request.method, '\n'.join(headers_string)))
-    print(request.body.getvalue())
+    print(">>>BODY<<<")
+    try:
+        print(request.body.getvalue())
+    except:
+        for line in request.body:
+            print(line)
     return ''
 @APP.get("/locate/<location>")
 def locate(location):
