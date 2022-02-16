@@ -3,7 +3,6 @@ import random
 import time
 import bottle, os, psycopg2
 import ftputil
-from pyautogui import *
 import cv2
 import numpy as np
 import imutils
