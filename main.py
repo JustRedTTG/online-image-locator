@@ -301,14 +301,11 @@ def icon(favicon):
         return '404 no such favicon file'
 @APP.post("/locate/<location>")
 def findIT(location):
-    headers_string = ['{}: {}'.format(h, request.headers.get(h)) for h in request.headers.keys()]
-    print('URL={}, method={}\nheaders:\n{}'.format(request.url, request.method, '\n'.join(headers_string)))
-    print(">>>BODY<<<")
-    try:
-        print(request.body.getvalue())
-    except:
-        for line in request.body:
-            print(line.decode('utf-8', errors='ignore'))
+    image = request.files.get('image')
+    if image:
+        print(image)
+    else:
+        print("NO IMAGE :(")
     return ''
 @APP.get("/locate/<location>")
 def locate(location):
