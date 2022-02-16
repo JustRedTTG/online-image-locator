@@ -2,5 +2,4 @@ bottle
 gunicorn
 psycopg2-binary
 ftputil
-opencv-python
 imutils
