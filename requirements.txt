@@ -2,5 +2,5 @@ bottle
 gunicorn
 psycopg2-binary
 ftputil
-opencv-python-headless==4.3.0.38
+opencv-python-headless
 imutils
