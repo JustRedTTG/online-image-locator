@@ -4,3 +4,4 @@ psycopg2-binary
 ftputil
 opencv-python-headless
 imutils
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
